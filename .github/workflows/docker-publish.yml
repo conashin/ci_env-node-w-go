@@ -87,8 +87,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=node-v${{ matrix.node-version }}
-            type=raw,value=node-v${{ matrix.node-version }}-${{ github.sha }}
+            type=raw,value=node-${{ matrix.node-version }}
+            type=raw,value=node-${{ matrix.node-version }}-${{ github.sha }}
             type=raw,value=latest,enable=${{ matrix.node-version == needs.fetch-versions.outputs.latest-lts }}
 
       - name: Set up Docker Buildx
@@ -125,7 +125,7 @@ jobs:
           min-versions-to-keep: 0
           delete-only-untagged-versions: 'true'
 
-      - name: Cleanup Old node-v${{ matrix.node-version }} Images
+      - name: Cleanup Old node-${{ matrix.node-version }} Images
         uses: snok/container-retention-policy@v3.0.0
         with:
           image-names: ${{ env.IMAGE_NAME }}
@@ -133,4 +133,4 @@ jobs:
           keep-n-most-recent: 5
           account: user # CHANGE to 'org' if this is an organization
           token: ${{ secrets.GITHUB_TOKEN }}
-          image-tags: "node-v${{ matrix.node-version }}*"
+          image-tags: "node-${{ matrix.node-version }}*"
