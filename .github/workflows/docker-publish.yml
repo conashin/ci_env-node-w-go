@@ -130,8 +130,7 @@ jobs:
         with:
           image-names: ${{ env.IMAGE_NAME }}
           cut-off: 1s # Process immediately
-          keep-at-least: 5
-          account-type: personal # CHANGE to 'org' if this is an organization
+          keep-n-most-recent: 5
+          account: user # CHANGE to 'org' if this is an organization
           token: ${{ secrets.GITHUB_TOKEN }}
-          filter-tags: ^node-${{ matrix.node-version }}.* # Regex to match tags
-          skip-tags: latest
+          image-tags: "node-${{ matrix.node-version }}*"
