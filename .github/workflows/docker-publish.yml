@@ -23,7 +23,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18, 20, 22]
+        node-version: [18, 20, 22] # Node 22 is the latest LTS
 
     steps:
       - name: Checkout repository
