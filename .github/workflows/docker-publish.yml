@@ -25,7 +25,8 @@ jobs:
         id: set-matrix
         run: |
           # Fetch the schedule.json from nodejs.org
-          curl -s https://raw.githubusercontent.com/nodejs/Release/main/schedule.json > schedule.json
+          # Using the specific URL requested by the user
+          curl -s https://raw.githubusercontent.com/nodejs/Release/refs/heads/main/schedule.json > schedule.json
 
           # Use jq to filter and extract LTS versions
           # Logic:

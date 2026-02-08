@@ -10,18 +10,21 @@ This image is designed for CI/CD pipelines (e.g., GitLab CI) where both Node.js 
 - **Go Version:** Latest stable Go version (copied from official `golang` image).
 - **Multi-Arch Support:** Built for standard architectures (AMD64).
 - **Automated Updates:** Rebuilt weekly to include latest security patches.
+- **Dynamic Node.js Versions:** Automatically builds images for all **current Node.js LTS versions** (Active and Maintenance).
 - **Retention Policy:** Keeps only the last 5 versions per tag to save space.
 
 ## Available Tags
 
 The images are published to GitHub Container Registry (GHCR).
 
-| Tag       | Node Version | Go Version | Description                  |
-|-----------|--------------|------------|------------------------------|
-| `latest`  | Node 22      | Latest     | Recommended for most users.  |
-| `node-22` | Node 22      | Latest     | Specific to Node 22.         |
-| `node-20` | Node 20      | Latest     | LTS (Iron).                  |
-| `node-18` | Node 18      | Latest     | Maintenance LTS (Hydrogen).  |
+Tags are generated dynamically based on the [official Node.js release schedule](https://raw.githubusercontent.com/nodejs/Release/refs/heads/main/schedule.json).
+Typically, you will find tags corresponding to the current LTS versions.
+
+| Tag Pattern | Description |
+|-------------|-------------|
+| `latest`    | Latest Active LTS version (e.g., Node 22 or 24). |
+| `node-XX`   | Specific LTS major version (e.g., `node-22`, `node-20`). |
+| `node-XX-SHA` | Specific build commit SHA (immutable). |
 
 ## Usage
 
@@ -50,6 +53,7 @@ By default, packages published to GHCR are **private**. To allow public access (
 
 The GitHub Actions workflow (`.github/workflows/docker-publish.yml`) handles:
 
-1.  **Build & Push**: Runs on push to `main` and on a weekly schedule.
-2.  **Matrix Build**: Builds images for Node 18, 20, and 22 in parallel.
-3.  **Cleanup**: Automatically deletes old package versions, keeping only the 5 most recent per tag.
+1.  **Fetch Versions**: Dynamically determines current LTS versions from `nodejs.org`.
+2.  **Build & Push**: Runs on push to `main` and on a weekly schedule.
+3.  **Matrix Build**: Builds images for all identified LTS versions in parallel.
+4.  **Cleanup**: Automatically deletes old package versions, keeping only the 5 most recent per tag.

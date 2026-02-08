@@ -2,7 +2,7 @@
 
 # Define the image to use for the job.
 # Replace 'your-username' and 'your-repo' with your actual GitHub details.
-# You can use tags like 'node-22', 'node-20', or 'latest'.
+# You can use tags like 'node-22', 'node-24', or 'latest'.
 image: ghcr.io/your-username/your-repo:latest
 
 stages:
