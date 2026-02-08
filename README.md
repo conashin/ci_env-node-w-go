@@ -31,10 +31,14 @@ Typically, you will find tags corresponding to the current LTS versions.
 ### Pulling the Image
 
 ```bash
-docker pull ghcr.io/<your-username>/<your-repo>:latest
+docker pull ghcr.io/conashin/ci_env-node-w-go:latest
 ```
 
-Replace `<your-username>` and `<your-repo>` with your GitHub username and repository name.
+Or pull a specific Node.js version:
+
+```bash
+docker pull ghcr.io/conashin/ci_env-node-w-go:node-22
+```
 
 ### Using in GitLab CI
 
