@@ -15,7 +15,51 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  fetch-versions:
+    runs-on: ubuntu-latest
+    outputs:
+      node-versions: ${{ steps.set-matrix.outputs.node-versions }}
+      latest-lts: ${{ steps.set-matrix.outputs.latest-lts }}
+    steps:
+      - name: Fetch and Parse Node.js Versions
+        id: set-matrix
+        run: |
+          # Fetch the schedule.json from nodejs.org
+          curl -s https://raw.githubusercontent.com/nodejs/Release/main/schedule.json > schedule.json
+
+          # Use jq to filter and extract LTS versions
+          # Logic:
+          # 1. Has 'lts' property (is an LTS release)
+          # 2. 'end' date is in the future (still supported)
+          # 3. 'start' date is in the past (already released)
+          # Sort by version number (ascending)
+
+          # Current date in YYYY-MM-DD format
+          TODAY=$(date +%Y-%m-%d)
+
+          echo "Today is $TODAY"
+
+          # Extract versions
+          VERSIONS=$(jq -c --arg today "$TODAY" '
+            to_entries
+            | map(select(.value.lts and .value.end > $today and .value.start <= $today))
+            | map(.key | ltrimstr("v") | tonumber)
+            | sort
+          ' schedule.json)
+
+          echo "Found LTS versions: $VERSIONS"
+
+          # Extract the latest LTS version (last in the sorted array)
+          LATEST=$(echo "$VERSIONS" | jq '.[-1]')
+
+          echo "Latest LTS is: $LATEST"
+
+          # Set outputs
+          echo "node-versions=$VERSIONS" >> $GITHUB_OUTPUT
+          echo "latest-lts=$LATEST" >> $GITHUB_OUTPUT
+
   build-and-push:
+    needs: fetch-versions
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -23,7 +67,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18, 20, 22] # Node 22 is the latest LTS
+        node-version: ${{ fromJson(needs.fetch-versions.outputs.node-versions) }}
 
     steps:
       - name: Checkout repository
@@ -44,7 +88,7 @@ jobs:
           tags: |
             type=raw,value=node-${{ matrix.node-version }}
             type=raw,value=node-${{ matrix.node-version }}-${{ github.sha }}
-            type=raw,value=latest,enable=${{ matrix.node-version == '22' }}
+            type=raw,value=latest,enable=${{ matrix.node-version == needs.fetch-versions.outputs.latest-lts }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -63,17 +107,16 @@ jobs:
           cache-to: type=gha,mode=max,scope=build-${{ matrix.node-version }}
 
   cleanup:
-    needs: build-and-push
+    needs: [fetch-versions, build-and-push]
     runs-on: ubuntu-latest
     permissions:
       packages: write
     strategy:
       matrix:
-        # Define tag prefixes to clean up independently
-        tag-prefix: [ "node-18", "node-20", "node-22" ]
+        node-version: ${{ fromJson(needs.fetch-versions.outputs.node-versions) }}
     steps:
       - name: Cleanup Untagged Images (Run once)
-        if: matrix.tag-prefix == 'node-18' # Optimization: Run only once
+        if: strategy.job-index == 0 # Optimization: Run only on first job instance
         uses: actions/delete-package-versions@v5
         with:
           package-name: ${{ github.event.repository.name }}
@@ -81,7 +124,7 @@ jobs:
           min-versions-to-keep: 0
           delete-only-untagged-versions: 'true'
 
-      - name: Cleanup Old ${{ matrix.tag-prefix }} Images
+      - name: Cleanup Old node-${{ matrix.node-version }} Images
         uses: snok/container-retention-policy@v3.0.0
         with:
           image-names: ${{ env.IMAGE_NAME }}
@@ -89,5 +132,5 @@ jobs:
           keep-at-least: 5
           account-type: personal # CHANGE to 'org' if this is an organization
           token: ${{ secrets.GITHUB_TOKEN }}
-          filter-tags: ^${{ matrix.tag-prefix }}.* # Regex to match tags like node-18, node-18-sha...
+          filter-tags: ^node-${{ matrix.node-version }}.* # Regex to match tags
           skip-tags: latest
