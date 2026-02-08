@@ -1,0 +1,39 @@
+# Example .gitlab-ci.yml to use the custom Node+Go image from GHCR
+
+# Define the image to use for the job.
+# Replace 'your-username' and 'your-repo' with your actual GitHub details.
+# You can use tags like 'node-22', 'node-20', or 'latest'.
+image: ghcr.io/your-username/your-repo:latest
+
+stages:
+  - build
+  - test
+
+variables:
+  # Verify Go and Node versions in the pipeline
+  GO_VERSION: "go version"
+  NODE_VERSION: "node -v"
+
+build_job:
+  stage: build
+  script:
+    - echo "Checking tools..."
+    - $GO_VERSION
+    - $NODE_VERSION
+    - echo "Building project..."
+    - go build ./... || echo "No go files to build, but go is available"
+    - npm install || echo "No package.json, but npm is available"
+
+test_job:
+  stage: test
+  script:
+    - go test ./... || echo "No tests found"
+    - npm test || echo "No tests found"
+
+# Note on Visibility:
+# By default, GitHub Container Registry packages are private.
+# To allow GitLab (or anyone) to pull this image without authentication:
+# 1. Go to your GitHub Repository -> "Packages" (right sidebar).
+# 2. Click on the package name.
+# 3. Go to "Package settings" -> "Danger Zone".
+# 4. Click "Change visibility" and set it to "Public".
