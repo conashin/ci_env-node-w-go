@@ -128,7 +128,7 @@ jobs:
       - name: Cleanup Old node-${{ matrix.node-version }} Images
         uses: snok/container-retention-policy@v3.0.0
         with:
-          image-names: ${{ env.IMAGE_NAME }}
+          image-names: ${{ github.event.repository.name }}
           cut-off: 1s # Process immediately
           keep-n-most-recent: 5
           account: user # CHANGE to 'org' if this is an organization
